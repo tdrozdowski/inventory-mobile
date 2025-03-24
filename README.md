@@ -35,6 +35,69 @@ npm run reset-project
 
 This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
+## API Configuration
+
+This app connects to a backend API to fetch and manage inventory data. The API configuration is stored in a persistent configuration system.
+
+### Installation Requirements
+
+Before running the app, you need to install the AsyncStorage package:
+
+```bash
+npm install @react-native-async-storage/async-storage
+```
+
+### Configuration System
+
+The app uses a configuration system that allows you to:
+
+1. Configure the API host for different environments (development, staging, production)
+2. Persist configuration changes between app sessions using AsyncStorage
+3. Update configuration at runtime through a configuration screen
+
+### Accessing the Configuration Screen
+
+To access the configuration screen:
+
+1. Navigate to `/config` in the app
+2. The screen displays the current environment and API host
+3. You can update the API host and save the changes
+4. Changes take effect immediately
+
+### Programmatic Configuration
+
+You can also update the API configuration programmatically:
+
+```typescript
+import { updateApiHost, initializeApiConfig } from '@/constants/ApiConfig';
+
+// Initialize the API configuration (call this when your app starts)
+await initializeApiConfig();
+
+// Update the API host
+await updateApiHost('https://new-api.example.com');
+```
+
+### Default Configuration
+
+The app comes with default configuration for each environment:
+
+- Development: `https://dev-api.example.com`
+- Staging: `https://staging-api.example.com`
+- Production: `https://api.example.com`
+
+### Changing the Environment
+
+To change the current environment, modify the `getCurrentEnvironment` function in `constants/ApiConfig.ts`:
+
+```typescript
+export const getCurrentEnvironment = (): Environment => {
+  // For demo purposes, default to development
+  // In a real app, you might use process.env.NODE_ENV or similar
+  return 'development'; // Change to 'staging' or 'production'
+};
+```
+
 ## Learn more
 
 To learn more about developing your project with Expo, look at the following resources:

@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { initializeApiConfig } from '@/constants/ApiConfig';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -22,6 +23,20 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [loaded]);
+
+  // Initialize API configuration when the app starts
+  useEffect(() => {
+    const initApi = async () => {
+      try {
+        await initializeApiConfig();
+        console.log('API configuration initialized');
+      } catch (error) {
+        console.error('Failed to initialize API configuration:', error);
+      }
+    };
+
+    initApi();
+  }, []);
 
   if (!loaded) {
     return null;

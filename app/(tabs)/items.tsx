@@ -1,74 +1,65 @@
-import { StyleSheet } from 'react-native';
-import { useEffect, useState } from 'react';
+import { StyleSheet, TouchableOpacity } from 'react-native';
+import { useEffect, useState, useCallback } from 'react';
 
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-
-// Define the Item type based on the API schema
-interface Item {
-  id: number;
-  alt_id: string;
-  name: string;
-  description: string;
-  unit_price: number;
-  created_by: string;
-  created_at: string;
-  last_update: string;
-  last_changed_by: string;
-}
+import { ErrorDisplay } from '@/components/ErrorDisplay';
+import { ConfigSheet } from '@/components/ConfigSheet';
+import { Item, itemsApi, ApiError } from '@/services/api';
 
 export default function ItemsScreen() {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<{
+    apiUrl?: string;
+    apiEnvironment?: string;
+  }>({});
+  const [isConfigSheetVisible, setIsConfigSheetVisible] = useState(false);
 
-  // Fetch items from the API
-  useEffect(() => {
-    const fetchItems = async () => {
-      try {
-        // In a real app, replace with actual API endpoint
-        // const response = await fetch('https://your-api-url/items');
-        // const data = await response.json();
-        
-        // For demo purposes, using mock data
-        const mockItems: Item[] = [
-          {
-            id: 1,
-            alt_id: 'ITEM001',
-            name: 'Sample Item 1',
-            description: 'This is a sample item',
-            unit_price: 19.99,
-            created_by: 'system',
-            created_at: new Date().toISOString(),
-            last_update: new Date().toISOString(),
-            last_changed_by: 'system'
-          },
-          {
-            id: 2,
-            alt_id: 'ITEM002',
-            name: 'Sample Item 2',
-            description: 'This is another sample item',
-            unit_price: 29.99,
-            created_by: 'system',
-            created_at: new Date().toISOString(),
-            last_update: new Date().toISOString(),
-            last_changed_by: 'system'
-          }
-        ];
-        
-        setItems(mockItems);
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to fetch items');
-        setLoading(false);
-        console.error(err);
+  // Fetch items from the API - memoized with useCallback so it can be used as a dependency and for retry
+  const fetchItems = useCallback(async () => {
+    // Reset state before fetching
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Fetch items from the API using the itemsApi service
+      const fetchedItems = await itemsApi.getItems();
+
+      setItems(fetchedItems);
+      setLoading(false);
+      // Clear any previous error details
+      setErrorDetails({});
+    } catch (err) {
+      // Handle API errors
+      const errorMessage = err instanceof ApiError 
+        ? `API Error (${err.status}): ${err.message}` 
+        : 'Failed to fetch items';
+
+      setError(errorMessage);
+      setLoading(false);
+      console.error(err);
+
+      // Store API details for debugging if available
+      if (err instanceof ApiError) {
+        setErrorDetails({
+          apiUrl: err.url,
+          apiEnvironment: err.environment
+        });
+      } else {
+        // Clear any previous error details
+        setErrorDetails({});
       }
-    };
-
-    fetchItems();
+    }
   }, []);
+
+  // Fetch items on component mount
+  useEffect(() => {
+    fetchItems();
+  }, [fetchItems]);
 
   return (
     <ParallaxScrollView
@@ -82,24 +73,47 @@ export default function ItemsScreen() {
       }>
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Items</ThemedText>
+        <TouchableOpacity 
+          style={styles.configButton}
+          onPress={() => setIsConfigSheetVisible(true)}
+        >
+          <IconSymbol
+            name="gear"
+            size={24}
+            color="#4A90E2"
+          />
+        </TouchableOpacity>
       </ThemedView>
 
       {loading ? (
-        <ThemedText>Loading items...</ThemedText>
+        <ThemedView style={styles.loadingContainer}>
+          <ThemedText>Loading items...</ThemedText>
+        </ThemedView>
       ) : error ? (
-        <ThemedText style={styles.errorText}>{error}</ThemedText>
+        <ErrorDisplay 
+          message={error} 
+          onRetry={fetchItems}
+          apiUrl={errorDetails.apiUrl}
+          apiEnvironment={errorDetails.apiEnvironment}
+        />
       ) : (
         <>
           {items.map((item) => (
             <ThemedView key={item.id} style={styles.itemContainer}>
               <ThemedText type="subtitle">{item.name}</ThemedText>
               <ThemedText>{item.description}</ThemedText>
-              <ThemedText>Price: ${item.unit_price.toFixed(2)}</ThemedText>
+              <ThemedText>Price: ${!isNaN(parseFloat(item.unit_price)) ? parseFloat(item.unit_price).toFixed(2) : '0.00'}</ThemedText>
               <ThemedText style={styles.idText}>ID: {item.alt_id}</ThemedText>
             </ThemedView>
           ))}
         </>
       )}
+
+      {/* Config Sheet */}
+      <ConfigSheet 
+        isVisible={isConfigSheetVisible}
+        onClose={() => setIsConfigSheetVisible(false)}
+      />
     </ParallaxScrollView>
   );
 }
@@ -113,8 +127,17 @@ const styles = StyleSheet.create({
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'space-between',
     marginBottom: 16,
+  },
+  configButton: {
+    padding: 8,
+  },
+  loadingContainer: {
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: 16,
   },
   itemContainer: {
     padding: 16,
@@ -122,9 +145,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#ccc',
-  },
-  errorText: {
-    color: 'red',
   },
   idText: {
     marginTop: 8,

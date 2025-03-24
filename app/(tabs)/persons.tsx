@@ -1,71 +1,63 @@
 import { StyleSheet } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-
-// Define the Person type based on the API schema
-interface Person {
-  id: number;
-  alt_id: string;
-  name: string;
-  email: string;
-  created_by: string;
-  created_at: string;
-  last_update: string;
-  last_changed_by: string;
-}
+import { ErrorDisplay } from '@/components/ErrorDisplay';
+import { Person, personsApi, ApiError } from '@/services/api';
 
 export default function PersonsScreen() {
   const [persons, setPersons] = useState<Person[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<{
+    apiUrl?: string;
+    apiEnvironment?: string;
+  }>({});
 
-  // Fetch persons from the API
-  useEffect(() => {
-    const fetchPersons = async () => {
-      try {
-        // In a real app, replace with actual API endpoint
-        // const response = await fetch('https://your-api-url/persons');
-        // const data = await response.json();
-        
-        // For demo purposes, using mock data
-        const mockPersons: Person[] = [
-          {
-            id: 1,
-            alt_id: 'PERSON001',
-            name: 'John Doe',
-            email: 'john.doe@example.com',
-            created_by: 'system',
-            created_at: new Date().toISOString(),
-            last_update: new Date().toISOString(),
-            last_changed_by: 'system'
-          },
-          {
-            id: 2,
-            alt_id: 'PERSON002',
-            name: 'Jane Smith',
-            email: 'jane.smith@example.com',
-            created_by: 'system',
-            created_at: new Date().toISOString(),
-            last_update: new Date().toISOString(),
-            last_changed_by: 'system'
-          }
-        ];
-        
-        setPersons(mockPersons);
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to fetch persons');
-        setLoading(false);
-        console.error(err);
+  // Fetch persons from the API - memoized with useCallback so it can be used as a dependency and for retry
+  const fetchPersons = useCallback(async () => {
+    // Reset state before fetching
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Fetch persons from the API using the personsApi service
+      const data = await personsApi.getPersons();
+
+      setPersons(data);
+      setLoading(false);
+      // Clear any previous error details
+      setErrorDetails({});
+    } catch (err) {
+      // Handle API errors
+      const errorMessage = err instanceof ApiError 
+        ? `API Error (${err.status}): ${err.message}` 
+        : 'Failed to fetch persons';
+
+      setError(errorMessage);
+      setLoading(false);
+      console.error(err);
+
+      // Store API details for debugging if available
+      if (err instanceof ApiError) {
+        setErrorDetails({
+          apiUrl: err.url,
+          apiEnvironment: err.environment
+        });
+      } else {
+        // Clear any previous error details
+        setErrorDetails({});
       }
-    };
-
-    fetchPersons();
+    }
   }, []);
+
+  // Fetch persons on component mount
+  useEffect(() => {
+    fetchPersons();
+  }, [fetchPersons]);
 
   return (
     <ParallaxScrollView
@@ -82,9 +74,16 @@ export default function PersonsScreen() {
       </ThemedView>
 
       {loading ? (
-        <ThemedText>Loading persons...</ThemedText>
+        <ThemedView style={styles.loadingContainer}>
+          <ThemedText>Loading persons...</ThemedText>
+        </ThemedView>
       ) : error ? (
-        <ThemedText style={styles.errorText}>{error}</ThemedText>
+        <ErrorDisplay 
+          message={error} 
+          onRetry={fetchPersons}
+          apiUrl={errorDetails.apiUrl}
+          apiEnvironment={errorDetails.apiEnvironment}
+        />
       ) : (
         <>
           {persons.map((person) => (
@@ -112,15 +111,18 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 16,
   },
+  loadingContainer: {
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: 16,
+  },
   personContainer: {
     padding: 16,
     marginBottom: 16,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#ccc',
-  },
-  errorText: {
-    color: 'red',
   },
   idText: {
     marginTop: 8,

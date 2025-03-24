@@ -52,6 +52,7 @@ export default function TabLayout() {
         options={{
           title: 'Invoice Items',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="doc.text.magnifyingglass" color={color} />,
+          tabBarButton: () => null,
         }}
       />
     </Tabs>
