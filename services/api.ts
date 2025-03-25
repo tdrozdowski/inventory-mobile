@@ -88,6 +88,13 @@ async function fetchApi<T>(
       );
     }
 
+    // Check if the response has content
+    const contentType = response.headers.get('content-type');
+    // For DELETE operations or empty responses, just return success
+    if (options.method === 'DELETE' || !contentType || !contentType.includes('application/json')) {
+      return {} as T; // Return empty object for void/empty responses
+    }
+
     return await response.json();
   } catch (error) {
     if (error instanceof ApiError) {
@@ -119,6 +126,13 @@ export const itemsApi = {
     return fetchApi<Item>(API_CONFIG.endpoints.items, {
       method: 'POST',
       body: JSON.stringify(item),
+    });
+  },
+
+  // Delete an item by ID
+  deleteItem: async (id: number): Promise<void> => {
+    return fetchApi<void>(API_CONFIG.endpoints.itemById(id), {
+      method: 'DELETE',
     });
   },
 };

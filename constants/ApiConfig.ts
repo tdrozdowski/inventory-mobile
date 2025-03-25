@@ -67,6 +67,7 @@ export const API_CONFIG = {
   endpoints: {
     items: '/items',
     itemByAltId: (altId: string) => `/items/alt/${altId}`,
+    itemById: (id: number) => `/items/${id}`,
 
     // Person endpoints
     persons: '/persons',

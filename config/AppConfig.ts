@@ -22,7 +22,7 @@ export interface AppConfig {
 export const DEFAULT_CONFIG: AppConfig = {
   api: {
     development: {
-      baseUrl: 'http://localhost:3000',
+      baseUrl: 'http://localhost:3000/api/v1',
       timeout: 30000,
     },
     staging: {
