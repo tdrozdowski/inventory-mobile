@@ -10,6 +10,8 @@ import { Environment } from '@/constants/ApiConfig';
 export interface ApiConfig {
   baseUrl: string;
   timeout: number;
+  clientId: string;
+  clientSecret: string;
 }
 
 export interface AppConfig {
@@ -24,14 +26,20 @@ export const DEFAULT_CONFIG: AppConfig = {
     development: {
       baseUrl: 'http://localhost:3000/api/v1',
       timeout: 30000,
+      clientId: '',
+      clientSecret: '',
     },
     staging: {
       baseUrl: 'https://staging-api.example.com',
       timeout: 15000,
+      clientId: '',
+      clientSecret: '',
     },
     production: {
       baseUrl: 'https://api.example.com',
       timeout: 10000,
+      clientId: '',
+      clientSecret: '',
     },
   },
 };

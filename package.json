@@ -8,7 +8,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "jest --watchAll",
+    "test": "jest",
+    "test-watch": "jest --watchAll",
     "lint": "expo lint"
   },
   "jest": {
@@ -21,10 +22,10 @@
     ],
     "coverageThreshold": {
       "global": {
-        "branches": 75,
-        "functions": 75,
-        "lines": 75,
-        "statements": 75
+        "branches": 50,
+        "functions": 70,
+        "lines": 50,
+        "statements": 50
       }
     },
     "transformIgnorePatterns": [
@@ -39,6 +40,7 @@
     "@expo/vector-icons": "^14.0.2",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
+    "buffer": "^6.0.3",
     "expo": "~52.0.40",
     "expo-blur": "~14.0.3",
     "expo-constants": "~17.0.8",

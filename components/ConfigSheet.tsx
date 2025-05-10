@@ -5,13 +5,14 @@ import { BlurView } from 'expo-blur';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import { API_CONFIG, getCurrentEnvironment, updateApiHost, initializeApiConfig } from '@/constants/ApiConfig';
+import { API_CONFIG, getCurrentEnvironment, updateApiHost, updateClientCredentials, initializeApiConfig, getBearerToken } from '@/constants/ApiConfig';
+import { authApi } from '@/services/api';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 // Check if we're in a test environment
-const isTestEnvironment = 
-  Platform.OS === 'web' && 
-  typeof process !== 'undefined' && 
+const isTestEnvironment =
+  Platform.OS === 'web' &&
+  typeof process !== 'undefined' &&
   process.env?.NODE_ENV === 'test';
 
 interface ConfigSheetProps {
@@ -21,8 +22,12 @@ interface ConfigSheetProps {
 
 export function ConfigSheet({ isVisible, onClose }: ConfigSheetProps) {
   const [apiHost, setApiHost] = useState('');
+  const [clientId, setClientId] = useState('');
+  const [clientSecret, setClientSecret] = useState('');
   const [environment, setEnvironment] = useState('');
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const colorScheme = useColorScheme();
   const slideAnim = React.useRef(new Animated.Value(0)).current;
 
@@ -60,17 +65,56 @@ export function ConfigSheet({ isVisible, onClose }: ConfigSheetProps) {
   const loadConfig = async () => {
     setIsLoading(true);
     try {
+      // In test environment, skip the async initialization
+      if (isTestEnvironment) {
+        // Set the state with the current values directly
+        setApiHost(API_CONFIG.baseUrl);
+        setClientId(API_CONFIG.clientId);
+        setClientSecret(API_CONFIG.clientSecret);
+        setEnvironment(getCurrentEnvironment());
+        setToken(null); // No token in test environment
+        setIsLoading(false);
+        return;
+      }
+
       // Initialize the API configuration
       await initializeApiConfig();
 
       // Set the state with the current values
       setApiHost(API_CONFIG.baseUrl);
+      setClientId(API_CONFIG.clientId);
+      setClientSecret(API_CONFIG.clientSecret);
       setEnvironment(getCurrentEnvironment());
+
+      // Get the current token
+      const currentToken = await getBearerToken();
+      setToken(currentToken);
     } catch (error) {
       console.error('Failed to load configuration:', error);
       Alert.alert('Error', 'Failed to load configuration');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Function to refresh the token
+  const refreshToken = async () => {
+    if (!clientId || !clientSecret) {
+      Alert.alert('Error', 'Client ID and Client Secret are required to refresh the token');
+      return;
+    }
+
+    setIsRefreshing(true);
+    try {
+      // Pass the current clientId and clientSecret from the form
+      const response = await authApi.authorize(clientId, clientSecret);
+      setToken(response.token);
+      Alert.alert('Success', 'Token refreshed successfully');
+    } catch (error) {
+      console.error('Failed to refresh token:', error);
+      Alert.alert('Error', 'Failed to refresh token');
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -87,6 +131,9 @@ export function ConfigSheet({ isVisible, onClose }: ConfigSheetProps) {
 
       // Update the API host
       await updateApiHost(apiHost);
+
+      // Update client credentials
+      await updateClientCredentials(clientId, clientSecret);
 
       Alert.alert('Success', 'Configuration saved successfully');
 
@@ -130,23 +177,23 @@ export function ConfigSheet({ isVisible, onClose }: ConfigSheetProps) {
       onRequestClose={handleClose}
     >
       <View style={styles.modalOverlay}>
-        <BlurView 
-          intensity={colorScheme === 'dark' ? 40 : 60} 
-          style={StyleSheet.absoluteFill} 
+        <BlurView
+          intensity={colorScheme === 'dark' ? 40 : 60}
+          style={StyleSheet.absoluteFill}
           tint={colorScheme === 'dark' ? 'dark' : 'light'}
         />
         <TouchableOpacity testID="dismiss-area" style={styles.dismissArea} onPress={handleClose} />
 
-        <Animated.View 
+        <Animated.View
           style={[
-            styles.sheetContainer, 
-            { 
-              transform: [{ 
+            styles.sheetContainer,
+            {
+              transform: [{
                 translateY: slideAnim.interpolate({
                   inputRange: [0, 1],
                   outputRange: [600, 0],
                 })
-              }] 
+              }]
             }
           ]}
         >
@@ -176,6 +223,57 @@ export function ConfigSheet({ isVisible, onClose }: ConfigSheetProps) {
               autoCorrect={false}
               editable={!isLoading}
             />
+
+            <ThemedText style={styles.label}>Client ID</ThemedText>
+            <TextInput
+              style={styles.input}
+              value={clientId}
+              onChangeText={setClientId}
+              placeholder="Enter Client ID"
+              placeholderTextColor="#999"
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!isLoading}
+            />
+
+            <ThemedText style={styles.label}>Client Secret</ThemedText>
+            <TextInput
+              style={styles.input}
+              value={clientSecret}
+              onChangeText={setClientSecret}
+              placeholder="Enter Client Secret"
+              placeholderTextColor="#999"
+              autoCapitalize="none"
+              autoCorrect={false}
+              secureTextEntry={true}
+              editable={!isLoading}
+            />
+
+            <ThemedText style={styles.label}>Bearer Token</ThemedText>
+            <TextInput
+              style={styles.input}
+              value={token || ''}
+              placeholder="No token available"
+              placeholderTextColor="#999"
+              editable={false}
+              multiline={true}
+              numberOfLines={3}
+            />
+
+            <View style={styles.buttonRow}>
+              <TouchableOpacity
+                style={[
+                  styles.refreshButton,
+                  (!clientId || !clientSecret || isRefreshing) && styles.buttonDisabled
+                ]}
+                onPress={refreshToken}
+                disabled={!clientId || !clientSecret || isRefreshing}
+              >
+                <ThemedText style={styles.buttonText}>
+                  {isRefreshing ? 'Refreshing...' : 'Refresh Token'}
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
 
             <TouchableOpacity
               style={[styles.button, isLoading && styles.buttonDisabled]}
@@ -264,6 +362,30 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     backgroundColor: '#fff',
     color: '#000',
+  },
+  tokenContainer: {
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginBottom: 16,
+    backgroundColor: '#f9f9f9',
+  },
+  tokenText: {
+    fontSize: 14,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: 16,
+  },
+  refreshButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
   },
   button: {
     backgroundColor: '#4A90E2',

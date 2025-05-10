@@ -70,7 +70,7 @@ jest.mock('@/components/ThemedText', () => {
       const colorStyle = { color: '#000000' }; // Mock the useThemeColor hook to match test expectations
 
       return (
-        <Text 
+        <Text
           style={[
             colorStyle,
             type === 'default' ? styles.default : undefined,
@@ -79,7 +79,7 @@ jest.mock('@/components/ThemedText', () => {
             type === 'subtitle' ? styles.subtitle : undefined,
             type === 'link' ? styles.link : undefined,
             style,
-          ]} 
+          ]}
           {...props}
         >
           {children}
@@ -163,7 +163,7 @@ jest.mock('@/constants/ApiConfig', () => {
 
   // Create a mutable API_CONFIG object
   const API_CONFIG = {
-    baseUrl: 'http://localhost:3000',
+    baseUrl: 'http://localhost:3000/api/v1',
     timeout: 30000,
     environment: 'development',
     headers: {
@@ -171,16 +171,31 @@ jest.mock('@/constants/ApiConfig', () => {
       'Accept': 'application/json',
     },
     endpoints: {
+      // Item endpoints
       items: '/items',
+      itemById: (id) => `/items/${id}`,
       itemByAltId: (altId) => `/items/alt/${altId}`,
+
+      // Person endpoints
       persons: '/persons',
       personById: (id) => `/persons/${id}`,
       personByAltId: (altId) => `/persons/alt/${altId}`,
       personByEmail: (email) => `/persons/email/${email}`,
+
+      // Invoice endpoints
       invoices: '/invoices',
       invoiceById: (id) => `/invoices/${id}`,
       invoiceByAltId: (altId) => `/invoices/alt/${altId}`,
       invoicesByUserId: (userId) => `/invoices/user/${userId}`,
+
+      // Invoice-Items endpoints
+      invoiceItems: '/invoices-items',
+      invoiceItemsByInvoiceId: (invoiceId) => `/invoices-items/invoice/${invoiceId}`,
+      invoiceItemsByItemId: (itemId) => `/invoices-items/item/${itemId}`,
+      invoiceItemByIds: (invoiceId, itemId) => `/invoices-items/${invoiceId}/${itemId}`,
+
+      // Auth endpoint
+      authorize: '/authorize',
     },
   };
 

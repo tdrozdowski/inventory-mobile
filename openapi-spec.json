@@ -1,0 +1,1315 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/": {
+      "get": {
+        "description": "Returns a hello message from the application",
+        "operationId": "AppController_getHello",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Hello message retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get hello message",
+        "tags": [
+          "app"
+        ]
+      }
+    },
+    "/items": {
+      "get": {
+        "description": "Retrieves a list of all items in the inventory",
+        "operationId": "ItemsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of items retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ItemDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get all items",
+        "tags": [
+          "items"
+        ]
+      },
+      "post": {
+        "description": "Creates a new item in the inventory",
+        "operationId": "ItemsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Item created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          }
+        },
+        "summary": "Create item",
+        "tags": [
+          "items"
+        ]
+      }
+    },
+    "/items/alt/{altId}": {
+      "get": {
+        "description": "Retrieves an item by its alternative ID",
+        "operationId": "ItemsController_findByAltId",
+        "parameters": [
+          {
+            "name": "altId",
+            "required": true,
+            "in": "path",
+            "description": "Alternative ID of the item",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Item not found"
+          }
+        },
+        "summary": "Get item by alternative ID",
+        "tags": [
+          "items"
+        ]
+      }
+    },
+    "/items/{id}": {
+      "get": {
+        "description": "Retrieves an item by its ID",
+        "operationId": "ItemsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID of the item",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Item not found"
+          }
+        },
+        "summary": "Get item by ID",
+        "tags": [
+          "items"
+        ]
+      },
+      "put": {
+        "description": "Updates an existing item in the inventory",
+        "operationId": "ItemsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID of the item to update",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Item updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "404": {
+            "description": "Item not found"
+          }
+        },
+        "summary": "Update item",
+        "tags": [
+          "items"
+        ]
+      },
+      "delete": {
+        "description": "Deletes an item from the inventory",
+        "operationId": "ItemsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID of the item to delete",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item deleted successfully"
+          },
+          "404": {
+            "description": "Item not found"
+          }
+        },
+        "summary": "Delete item",
+        "tags": [
+          "items"
+        ]
+      }
+    },
+    "/persons": {
+      "get": {
+        "description": "Retrieves a list of all persons in the system",
+        "operationId": "PersonsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of persons retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PersonDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get all persons",
+        "tags": [
+          "persons"
+        ]
+      },
+      "post": {
+        "description": "Creates a new person in the system",
+        "operationId": "PersonsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePersonDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Person created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          }
+        },
+        "summary": "Create person",
+        "tags": [
+          "persons"
+        ]
+      }
+    },
+    "/persons/alt/{altId}": {
+      "get": {
+        "description": "Retrieves a person by their alternative ID",
+        "operationId": "PersonsController_findByAltId",
+        "parameters": [
+          {
+            "name": "altId",
+            "required": true,
+            "in": "path",
+            "description": "Alternative ID of the person",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Person retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Person not found"
+          }
+        },
+        "summary": "Get person by alternative ID",
+        "tags": [
+          "persons"
+        ]
+      }
+    },
+    "/persons/email/{email}": {
+      "get": {
+        "description": "Retrieves a person by their email address",
+        "operationId": "PersonsController_findByEmail",
+        "parameters": [
+          {
+            "name": "email",
+            "required": true,
+            "in": "path",
+            "description": "Email of the person",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Person retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Person not found"
+          }
+        },
+        "summary": "Get person by email",
+        "tags": [
+          "persons"
+        ]
+      }
+    },
+    "/persons/{id}": {
+      "get": {
+        "description": "Retrieves a person by their ID",
+        "operationId": "PersonsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID of the person",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Person retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Person not found"
+          }
+        },
+        "summary": "Get person by ID",
+        "tags": [
+          "persons"
+        ]
+      },
+      "put": {
+        "description": "Updates an existing person in the system",
+        "operationId": "PersonsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID of the person to update",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePersonDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Person updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "404": {
+            "description": "Person not found"
+          }
+        },
+        "summary": "Update person",
+        "tags": [
+          "persons"
+        ]
+      },
+      "delete": {
+        "description": "Deletes a person from the system",
+        "operationId": "PersonsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID of the person to delete",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Person deleted successfully"
+          },
+          "404": {
+            "description": "Person not found"
+          }
+        },
+        "summary": "Delete person",
+        "tags": [
+          "persons"
+        ]
+      }
+    },
+    "/invoices": {
+      "get": {
+        "description": "Retrieves a list of all invoices in the system",
+        "operationId": "InvoicesController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of invoices retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InvoiceDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get all invoices",
+        "tags": [
+          "invoices"
+        ]
+      },
+      "post": {
+        "description": "Creates a new invoice in the system",
+        "operationId": "InvoicesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInvoiceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Invoice created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          }
+        },
+        "summary": "Create invoice",
+        "tags": [
+          "invoices"
+        ]
+      }
+    },
+    "/invoices/alt/{altId}": {
+      "get": {
+        "description": "Retrieves an invoice by its alternative ID",
+        "operationId": "InvoicesController_findByAltId",
+        "parameters": [
+          {
+            "name": "altId",
+            "required": true,
+            "in": "path",
+            "description": "Alternative ID of the invoice",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Invoice not found"
+          }
+        },
+        "summary": "Get invoice by alternative ID",
+        "tags": [
+          "invoices"
+        ]
+      }
+    },
+    "/invoices/user/{userId}": {
+      "get": {
+        "description": "Retrieves all invoices associated with a specific user",
+        "operationId": "InvoicesController_findByUserId",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "description": "ID of the user",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of invoices retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InvoiceDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get invoices by user ID",
+        "tags": [
+          "invoices"
+        ]
+      }
+    },
+    "/invoices/{id}": {
+      "get": {
+        "description": "Retrieves an invoice by its ID",
+        "operationId": "InvoicesController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID of the invoice",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Invoice not found"
+          }
+        },
+        "summary": "Get invoice by ID",
+        "tags": [
+          "invoices"
+        ]
+      },
+      "put": {
+        "description": "Updates an existing invoice in the system",
+        "operationId": "InvoicesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID of the invoice to update",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInvoiceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Invoice updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "404": {
+            "description": "Invoice not found"
+          }
+        },
+        "summary": "Update invoice",
+        "tags": [
+          "invoices"
+        ]
+      },
+      "delete": {
+        "description": "Deletes an invoice from the system",
+        "operationId": "InvoicesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID of the invoice to delete",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice deleted successfully"
+          },
+          "404": {
+            "description": "Invoice not found"
+          }
+        },
+        "summary": "Delete invoice",
+        "tags": [
+          "invoices"
+        ]
+      }
+    },
+    "/invoices-items": {
+      "get": {
+        "description": "Retrieves a list of all invoice items in the system",
+        "operationId": "InvoicesItemsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of invoice items retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InvoiceItemDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get all invoice items",
+        "tags": [
+          "invoices-items"
+        ]
+      },
+      "post": {
+        "description": "Creates a new association between an invoice and an item",
+        "operationId": "InvoicesItemsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvoiceItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Invoice item created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          }
+        },
+        "summary": "Create invoice item",
+        "tags": [
+          "invoices-items"
+        ]
+      }
+    },
+    "/invoices-items/invoice/{invoiceId}": {
+      "get": {
+        "description": "Retrieves all items associated with a specific invoice",
+        "operationId": "InvoicesItemsController_findByInvoiceId",
+        "parameters": [
+          {
+            "name": "invoiceId",
+            "required": true,
+            "in": "path",
+            "description": "ID of the invoice",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of invoice items retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InvoiceItemDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get invoice items by invoice ID",
+        "tags": [
+          "invoices-items"
+        ]
+      },
+      "delete": {
+        "description": "Deletes all items associated with a specific invoice",
+        "operationId": "InvoicesItemsController_removeByInvoiceId",
+        "parameters": [
+          {
+            "name": "invoiceId",
+            "required": true,
+            "in": "path",
+            "description": "ID of the invoice",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice items deleted successfully"
+          }
+        },
+        "summary": "Delete invoice items by invoice ID",
+        "tags": [
+          "invoices-items"
+        ]
+      }
+    },
+    "/invoices-items/item/{itemId}": {
+      "get": {
+        "description": "Retrieves all invoices associated with a specific item",
+        "operationId": "InvoicesItemsController_findByItemId",
+        "parameters": [
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "description": "ID of the item",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of invoice items retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InvoiceItemDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get invoice items by item ID",
+        "tags": [
+          "invoices-items"
+        ]
+      },
+      "delete": {
+        "description": "Deletes all invoices associated with a specific item",
+        "operationId": "InvoicesItemsController_removeByItemId",
+        "parameters": [
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "description": "ID of the item",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice items deleted successfully"
+          }
+        },
+        "summary": "Delete invoice items by item ID",
+        "tags": [
+          "invoices-items"
+        ]
+      }
+    },
+    "/invoices-items/{invoiceId}/{itemId}": {
+      "get": {
+        "description": "Retrieves a specific invoice item by invoice ID and item ID",
+        "operationId": "InvoicesItemsController_findOne",
+        "parameters": [
+          {
+            "name": "invoiceId",
+            "required": true,
+            "in": "path",
+            "description": "ID of the invoice",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "description": "ID of the item",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice item retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceItemDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Invoice item not found"
+          }
+        },
+        "summary": "Get specific invoice item",
+        "tags": [
+          "invoices-items"
+        ]
+      },
+      "delete": {
+        "description": "Deletes a specific association between an invoice and an item",
+        "operationId": "InvoicesItemsController_remove",
+        "parameters": [
+          {
+            "name": "invoiceId",
+            "required": true,
+            "in": "path",
+            "description": "ID of the invoice",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "description": "ID of the item",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice item deleted successfully"
+          },
+          "404": {
+            "description": "Invoice item not found"
+          }
+        },
+        "summary": "Delete specific invoice item",
+        "tags": [
+          "invoices-items"
+        ]
+      }
+    },
+    "/authorize": {
+      "post": {
+        "operationId": "AuthController_authorize",
+        "parameters": [
+          {
+            "name": "authorization",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Inventory Service API",
+    "description": "API documentation for the Inventory Service",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "ItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier for the item",
+            "readOnly": true
+          },
+          "alt_id": {
+            "type": "string",
+            "description": "An alternative identifier for the item",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the item"
+          },
+          "description": {
+            "type": "string",
+            "description": "A description of the item"
+          },
+          "unit_price": {
+            "type": "number",
+            "description": "The price per unit",
+            "example": 10.99
+          },
+          "created_by": {
+            "type": "string",
+            "description": "Who created the item"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the item was created"
+          },
+          "last_update": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the item was last updated"
+          },
+          "last_changed_by": {
+            "type": "string",
+            "description": "Who last changed the item"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "unit_price"
+        ]
+      },
+      "CreateItemDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the item"
+          },
+          "description": {
+            "type": "string",
+            "description": "A description of the item"
+          },
+          "unit_price": {
+            "type": "number",
+            "description": "The price per unit",
+            "example": 10.99
+          },
+          "created_by": {
+            "type": "string",
+            "description": "Who created the item"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "unit_price"
+        ]
+      },
+      "UpdateItemDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the item"
+          },
+          "description": {
+            "type": "string",
+            "description": "A description of the item"
+          },
+          "unit_price": {
+            "type": "number",
+            "description": "The price per unit",
+            "example": 10.99
+          },
+          "last_changed_by": {
+            "type": "string",
+            "description": "Who last changed the item"
+          }
+        }
+      },
+      "PersonDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier for the person"
+          },
+          "alt_id": {
+            "type": "string",
+            "description": "An alternative identifier for the person",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the person"
+          },
+          "email": {
+            "type": "string",
+            "description": "The email of the person",
+            "example": "john.doe@example.com"
+          },
+          "created_by": {
+            "type": "string",
+            "description": "Who created the person"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the person was created"
+          },
+          "last_update": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the person was last updated"
+          },
+          "last_changed_by": {
+            "type": "string",
+            "description": "Who last changed the person"
+          }
+        },
+        "required": [
+          "name",
+          "email"
+        ]
+      },
+      "CreatePersonDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the person"
+          },
+          "email": {
+            "type": "string",
+            "description": "The email of the person",
+            "example": "john.doe@example.com"
+          },
+          "created_by": {
+            "type": "string",
+            "description": "Who created the person"
+          }
+        },
+        "required": [
+          "name",
+          "email"
+        ]
+      },
+      "UpdatePersonDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the person"
+          },
+          "email": {
+            "type": "string",
+            "description": "The email of the person",
+            "example": "john.doe@example.com"
+          },
+          "last_changed_by": {
+            "type": "string",
+            "description": "Who last changed the person"
+          }
+        }
+      },
+      "InvoiceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier for the invoice"
+          },
+          "alt_id": {
+            "type": "string",
+            "description": "An alternative identifier for the invoice",
+            "readOnly": true
+          },
+          "total": {
+            "type": "number",
+            "description": "The total amount of the invoice",
+            "example": 100.5
+          },
+          "paid": {
+            "type": "boolean",
+            "description": "Whether the invoice has been paid",
+            "default": false
+          },
+          "user_id": {
+            "type": "string",
+            "description": "The ID of the user associated with the invoice"
+          },
+          "created_by": {
+            "type": "string",
+            "description": "Who created the invoice"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the invoice was created"
+          },
+          "last_update": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the invoice was last updated"
+          },
+          "last_changed_by": {
+            "type": "string",
+            "description": "Who last changed the invoice"
+          }
+        },
+        "required": [
+          "total",
+          "user_id"
+        ]
+      },
+      "CreateInvoiceDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "description": "The total amount of the invoice",
+            "example": 100.5
+          },
+          "paid": {
+            "type": "boolean",
+            "description": "Whether the invoice has been paid",
+            "default": false
+          },
+          "user_id": {
+            "type": "string",
+            "description": "The ID of the user associated with the invoice"
+          },
+          "created_by": {
+            "type": "string",
+            "description": "Who created the invoice"
+          }
+        },
+        "required": [
+          "total",
+          "user_id"
+        ]
+      },
+      "UpdateInvoiceDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "description": "The total amount of the invoice",
+            "example": 100.5
+          },
+          "paid": {
+            "type": "boolean",
+            "description": "Whether the invoice has been paid"
+          },
+          "user_id": {
+            "type": "string",
+            "description": "The ID of the user associated with the invoice"
+          },
+          "last_changed_by": {
+            "type": "string",
+            "description": "Who last changed the invoice"
+          }
+        }
+      },
+      "InvoiceItemDto": {
+        "type": "object",
+        "properties": {
+          "invoice_id": {
+            "type": "string",
+            "description": "The ID of the invoice"
+          },
+          "item_id": {
+            "type": "string",
+            "description": "The ID of the item"
+          }
+        },
+        "required": [
+          "invoice_id",
+          "item_id"
+        ]
+      }
+    }
+  }
+}

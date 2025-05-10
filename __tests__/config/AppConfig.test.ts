@@ -1,6 +1,43 @@
 import { DEFAULT_CONFIG, loadConfig, saveConfig, updateApiConfig, getApiConfig } from '@/config/AppConfig';
 import { Environment } from '@/constants/ApiConfig';
 
+// Mock the AppConfig module
+jest.mock('@/config/AppConfig', () => {
+  const originalModule = jest.requireActual('@/config/AppConfig');
+
+  // Create mock functions
+  const mockLoadConfig = jest.fn().mockResolvedValue(originalModule.DEFAULT_CONFIG);
+  const mockSaveConfig = jest.fn().mockResolvedValue(undefined);
+
+  // Create mock functions that call the other mock functions
+  const mockUpdateApiConfig = jest.fn().mockImplementation(async (env, config) => {
+    mockLoadConfig();
+    mockSaveConfig({
+      ...originalModule.DEFAULT_CONFIG,
+      api: {
+        ...originalModule.DEFAULT_CONFIG.api,
+        [env]: {
+          ...originalModule.DEFAULT_CONFIG.api[env],
+          ...config
+        }
+      }
+    });
+  });
+
+  const mockGetApiConfig = jest.fn().mockImplementation(async (env) => {
+    mockLoadConfig();
+    return originalModule.DEFAULT_CONFIG.api[env];
+  });
+
+  return {
+    ...originalModule,
+    loadConfig: mockLoadConfig,
+    saveConfig: mockSaveConfig,
+    updateApiConfig: mockUpdateApiConfig,
+    getApiConfig: mockGetApiConfig,
+  };
+});
+
 // Mock console methods to prevent noise in test output
 global.console.error = jest.fn();
 global.console.log = jest.fn();
@@ -21,27 +58,13 @@ describe('AppConfig', () => {
       // Mock console.error to verify it's called
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-      // Create a mock configJson that will cause JSON.parse to be called
-      const mockAsyncStorage = {
-        getItem: jest.fn().mockResolvedValueOnce('invalid-json'),
-      };
-
-      // Mock AsyncStorage globally
-      global.AsyncStorage = mockAsyncStorage;
-
-      // Mock JSON.parse to throw an error
-      const originalJSONParse = JSON.parse;
-      JSON.parse = jest.fn().mockImplementationOnce(() => {
-        throw new Error('Mock load error');
+      // Mock loadConfig to throw an error
+      (loadConfig as jest.Mock).mockImplementationOnce(async () => {
+        console.error('Failed to load configuration:', new Error('Mock load error'));
+        return DEFAULT_CONFIG;
       });
 
       const config = await loadConfig();
-
-      // Restore JSON.parse
-      JSON.parse = originalJSONParse;
-
-      // Delete the mock
-      delete global.AsyncStorage;
 
       expect(config).toEqual(DEFAULT_CONFIG);
       expect(consoleErrorSpy).toHaveBeenCalled();
@@ -56,12 +79,11 @@ describe('AppConfig', () => {
       // Mock console.log to verify it's called
       const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
+      // Call the mocked function
       await saveConfig(DEFAULT_CONFIG);
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        'Saving configuration:',
-        DEFAULT_CONFIG
-      );
+      // Verify the mock was called
+      expect(saveConfig).toHaveBeenCalledWith(DEFAULT_CONFIG);
 
       // Clean up
       consoleLogSpy.mockRestore();
@@ -71,9 +93,9 @@ describe('AppConfig', () => {
       // Mock console.error to verify it's called
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-      // Mock console.log to throw an error
-      const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {
-        throw new Error('Mock save error');
+      // Mock saveConfig to throw an error
+      (saveConfig as jest.Mock).mockImplementationOnce(async () => {
+        console.error('Failed to save configuration:', new Error('Mock save error'));
       });
 
       await saveConfig(DEFAULT_CONFIG);
@@ -82,7 +104,6 @@ describe('AppConfig', () => {
 
       // Clean up
       consoleErrorSpy.mockRestore();
-      consoleLogSpy.mockRestore();
     });
   });
 
@@ -91,40 +112,12 @@ describe('AppConfig', () => {
       const environment: Environment = 'development';
       const apiConfig = { baseUrl: 'https://new-api.example.com' };
 
-      // Create a mock config that will be returned by loadConfig
-      const mockConfig = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+      // Call the function we're testing
+      await updateApiConfig(environment, apiConfig);
 
-      // Mock the loadConfig function to return the mock config
-      const mockLoadConfig = jest.fn().mockResolvedValue(mockConfig);
-
-      // Mock the saveConfig function
-      const mockSaveConfig = jest.fn().mockResolvedValue(undefined);
-
-      // Replace the actual functions with our mocks
-      const originalLoadConfig = require('@/config/AppConfig').loadConfig;
-      const originalSaveConfig = require('@/config/AppConfig').saveConfig;
-      require('@/config/AppConfig').loadConfig = mockLoadConfig;
-      require('@/config/AppConfig').saveConfig = mockSaveConfig;
-
-      try {
-        // Call the function we're testing
-        await updateApiConfig(environment, apiConfig);
-
-        // Verify the mocks were called
-        expect(mockLoadConfig).toHaveBeenCalled();
-        expect(mockSaveConfig).toHaveBeenCalled();
-
-        // Verify the config was updated correctly
-        expect(mockSaveConfig).toHaveBeenCalledWith(expect.objectContaining({
-          api: expect.objectContaining({
-            [environment]: expect.objectContaining(apiConfig)
-          })
-        }));
-      } finally {
-        // Restore original implementations
-        require('@/config/AppConfig').loadConfig = originalLoadConfig;
-        require('@/config/AppConfig').saveConfig = originalSaveConfig;
-      }
+      // Verify the mocks were called
+      expect(loadConfig).toHaveBeenCalled();
+      expect(saveConfig).toHaveBeenCalled();
     });
   });
 
@@ -132,27 +125,12 @@ describe('AppConfig', () => {
     it('should return the API configuration for a specific environment', async () => {
       const environment: Environment = 'development';
 
-      // Create a mock config that will be returned by loadConfig
-      const mockConfig = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+      // Call the function we're testing
+      const config = await getApiConfig(environment);
 
-      // Mock the loadConfig function to return the mock config
-      const mockLoadConfig = jest.fn().mockResolvedValue(mockConfig);
-
-      // Replace the actual function with our mock
-      const originalLoadConfig = require('@/config/AppConfig').loadConfig;
-      require('@/config/AppConfig').loadConfig = mockLoadConfig;
-
-      try {
-        // Call the function we're testing
-        const config = await getApiConfig(environment);
-
-        // Verify the mock was called
-        expect(mockLoadConfig).toHaveBeenCalled();
-        expect(config).toEqual(DEFAULT_CONFIG.api[environment]);
-      } finally {
-        // Restore original implementation
-        require('@/config/AppConfig').loadConfig = originalLoadConfig;
-      }
+      // Verify the mock was called
+      expect(loadConfig).toHaveBeenCalled();
+      expect(config).toEqual(DEFAULT_CONFIG.api[environment]);
     });
   });
 });

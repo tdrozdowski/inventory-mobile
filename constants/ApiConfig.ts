@@ -19,6 +19,10 @@ const currentEnv = getCurrentEnvironment();
 // Initialize with default configuration
 let currentEnvConfig = DEFAULT_CONFIG.api[currentEnv];
 
+// Token storage
+let bearerToken: string | null = null;
+let tokenExpiration: number | null = null;
+
 // Function to initialize the API configuration
 // This should be called when the app starts
 export const initializeApiConfig = async (): Promise<void> => {
@@ -32,11 +36,35 @@ export const initializeApiConfig = async (): Promise<void> => {
     // Update the API_CONFIG object
     API_CONFIG.baseUrl = config.baseUrl;
     API_CONFIG.timeout = config.timeout;
+    API_CONFIG.clientId = config.clientId;
+    API_CONFIG.clientSecret = config.clientSecret;
 
     console.log(`API configuration initialized for ${currentEnv} environment`);
   } catch (error) {
     console.error('Failed to initialize API configuration:', error);
   }
+};
+
+// Function to store the bearer token
+export const storeBearerToken = (token: string, expiresIn: number): void => {
+  bearerToken = token;
+  // Set expiration time (current time + expiresIn in seconds)
+  tokenExpiration = Date.now() + expiresIn * 1000;
+};
+
+// Function to get the bearer token
+export const getBearerToken = async (): Promise<string | null> => {
+  // If we don't have a token or it's expired, return null
+  if (!bearerToken || !tokenExpiration || Date.now() >= tokenExpiration) {
+    return null;
+  }
+  return bearerToken;
+};
+
+// Function to clear the bearer token
+export const clearBearerToken = (): void => {
+  bearerToken = null;
+  tokenExpiration = null;
 };
 
 // Function to update the API host
@@ -55,6 +83,27 @@ export const updateApiHost = async (baseUrl: string): Promise<void> => {
   }
 };
 
+// Function to update the client credentials
+export const updateClientCredentials = async (clientId: string, clientSecret: string): Promise<void> => {
+  try {
+    // Update the configuration
+    await updateApiConfig(currentEnv, { clientId, clientSecret });
+
+    // Update the current configuration
+    currentEnvConfig.clientId = clientId;
+    currentEnvConfig.clientSecret = clientSecret;
+    API_CONFIG.clientId = clientId;
+    API_CONFIG.clientSecret = clientSecret;
+
+    // Clear any existing token when credentials change
+    clearBearerToken();
+
+    console.log('Client credentials updated');
+  } catch (error) {
+    console.error('Failed to update client credentials:', error);
+  }
+};
+
 // The API configuration
 export const API_CONFIG = {
   // Base URL for the API - from environment config
@@ -63,11 +112,16 @@ export const API_CONFIG = {
   // Current environment
   environment: currentEnv,
 
+  // Client credentials for API authentication
+  clientId: currentEnvConfig.clientId,
+  clientSecret: currentEnvConfig.clientSecret,
+
   // API endpoints
   endpoints: {
+    // Item endpoints
     items: '/items',
     itemByAltId: (altId: string) => `/items/alt/${altId}`,
-    itemById: (id: number) => `/items/${id}`,
+    itemById: (id: string) => `/items/${id}`,
 
     // Person endpoints
     persons: '/persons',
@@ -80,6 +134,15 @@ export const API_CONFIG = {
     invoiceById: (id: string) => `/invoices/${id}`,
     invoiceByAltId: (altId: string) => `/invoices/alt/${altId}`,
     invoicesByUserId: (userId: string) => `/invoices/user/${userId}`,
+
+    // Invoice-Items endpoints
+    invoiceItems: '/invoices-items',
+    invoiceItemsByInvoiceId: (invoiceId: string) => `/invoices-items/invoice/${invoiceId}`,
+    invoiceItemsByItemId: (itemId: string) => `/invoices-items/item/${itemId}`,
+    invoiceItemByIds: (invoiceId: string, itemId: string) => `/invoices-items/${invoiceId}/${itemId}`,
+
+    // Auth endpoint
+    authorize: '/authorize',
   },
 
   // Request timeout in milliseconds - from environment config
