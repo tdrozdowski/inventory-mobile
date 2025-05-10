@@ -86,8 +86,9 @@ export function ConfigSheet({ isVisible, onClose }: ConfigSheetProps) {
       setClientSecret(API_CONFIG.clientSecret);
       setEnvironment(getCurrentEnvironment());
 
-      // Get the current token
+      // Get the current token - force refresh from storage
       const currentToken = await getBearerToken();
+      console.log('Current token:', currentToken ? 'Token exists' : 'No token');
       setToken(currentToken);
     } catch (error) {
       console.error('Failed to load configuration:', error);
@@ -135,16 +136,32 @@ export function ConfigSheet({ isVisible, onClose }: ConfigSheetProps) {
       // Update client credentials
       await updateClientCredentials(clientId, clientSecret);
 
+      // Try to refresh the token if client credentials are provided
+      if (clientId && clientSecret) {
+        try {
+          // Pass the current clientId and clientSecret from the form
+          const response = await authApi.authorize(clientId, clientSecret);
+          setToken(response.token);
+          console.log('Token refreshed after saving configuration');
+        } catch (tokenError) {
+          console.error('Failed to refresh token after saving configuration:', tokenError);
+          // Continue with saving even if token refresh fails
+        }
+      }
+
       Alert.alert('Success', 'Configuration saved successfully');
 
-      // In test environment, call onClose synchronously
-      if (isTestEnvironment) {
-        setIsLoading(false);
+      setIsLoading(false);
+      // Close the sheet after saving - use the same animation as the X button
+      // but don't check for token existence
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        // Call onClose directly without any additional checks
         onClose();
-      } else {
-        onClose(); // Close the sheet after saving
-        setIsLoading(false);
-      }
+      });
     } catch (error) {
       console.error('Failed to save configuration:', error);
       Alert.alert('Error', 'Failed to save configuration');

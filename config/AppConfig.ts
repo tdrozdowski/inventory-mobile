@@ -1,9 +1,7 @@
 // AppConfig.ts
 // This file contains the configuration for the app and functions to load/save configuration
 
-// Note: You need to install @react-native-async-storage/async-storage
-// Run: npm install @react-native-async-storage/async-storage
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Environment } from '@/constants/ApiConfig';
 
 // Define the structure of our configuration
@@ -50,10 +48,7 @@ const CONFIG_STORAGE_KEY = 'app_config';
 // Function to load the configuration
 export const loadConfig = async (): Promise<AppConfig> => {
   try {
-    // This is a placeholder for AsyncStorage.getItem
-    // In a real implementation, you would use:
-    // const configJson = await AsyncStorage.getItem(CONFIG_STORAGE_KEY);
-    const configJson = null; // Placeholder
+    const configJson = await AsyncStorage.getItem(CONFIG_STORAGE_KEY);
 
     if (configJson) {
       return { ...DEFAULT_CONFIG, ...JSON.parse(configJson) };
@@ -68,10 +63,8 @@ export const loadConfig = async (): Promise<AppConfig> => {
 // Function to save the configuration
 export const saveConfig = async (config: AppConfig): Promise<void> => {
   try {
-    // This is a placeholder for AsyncStorage.setItem
-    // In a real implementation, you would use:
-    // await AsyncStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config));
-    console.log('Saving configuration:', config); // Placeholder
+    await AsyncStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config));
+    console.log('Configuration saved successfully');
   } catch (error) {
     console.error('Failed to save configuration:', error);
   }

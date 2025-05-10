@@ -1,5 +1,6 @@
 // API configuration file
 // This file contains the configuration for the API
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DEFAULT_CONFIG, getApiConfig, updateApiConfig } from '@/config/AppConfig';
 
 // Environment types
@@ -19,7 +20,11 @@ const currentEnv = getCurrentEnvironment();
 // Initialize with default configuration
 let currentEnvConfig = DEFAULT_CONFIG.api[currentEnv];
 
-// Token storage
+// Token storage keys
+const TOKEN_STORAGE_KEY = 'bearer_token';
+const TOKEN_EXPIRATION_KEY = 'token_expiration';
+
+// In-memory cache for token
 let bearerToken: string | null = null;
 let tokenExpiration: number | null = null;
 
@@ -39,6 +44,9 @@ export const initializeApiConfig = async (): Promise<void> => {
     API_CONFIG.clientId = config.clientId;
     API_CONFIG.clientSecret = config.clientSecret;
 
+    // Try to load the token from AsyncStorage
+    await getBearerToken();
+
     console.log(`API configuration initialized for ${currentEnv} environment`);
   } catch (error) {
     console.error('Failed to initialize API configuration:', error);
@@ -46,25 +54,72 @@ export const initializeApiConfig = async (): Promise<void> => {
 };
 
 // Function to store the bearer token
-export const storeBearerToken = (token: string, expiresIn: number): void => {
-  bearerToken = token;
-  // Set expiration time (current time + expiresIn in seconds)
-  tokenExpiration = Date.now() + expiresIn * 1000;
+export const storeBearerToken = async (token: string, expiresIn: number): Promise<void> => {
+  try {
+    // Set in-memory cache
+    bearerToken = token;
+    // Set expiration time (current time + expiresIn in seconds)
+    tokenExpiration = Date.now() + expiresIn * 1000;
+
+    // Store in AsyncStorage for persistence
+    await AsyncStorage.setItem(TOKEN_STORAGE_KEY, token);
+    await AsyncStorage.setItem(TOKEN_EXPIRATION_KEY, tokenExpiration.toString());
+
+    console.log('Token stored successfully');
+  } catch (error) {
+    console.error('Failed to store token:', error);
+  }
 };
 
 // Function to get the bearer token
 export const getBearerToken = async (): Promise<string | null> => {
-  // If we don't have a token or it's expired, return null
-  if (!bearerToken || !tokenExpiration || Date.now() >= tokenExpiration) {
+  try {
+    // First check in-memory cache
+    if (bearerToken && tokenExpiration && Date.now() < tokenExpiration) {
+      return bearerToken;
+    }
+
+    // If not in memory or expired, try to get from AsyncStorage
+    const storedToken = await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
+    const storedExpiration = await AsyncStorage.getItem(TOKEN_EXPIRATION_KEY);
+
+    if (storedToken && storedExpiration) {
+      const expirationTime = parseInt(storedExpiration, 10);
+
+      // Check if token is still valid
+      if (Date.now() < expirationTime) {
+        // Update in-memory cache
+        bearerToken = storedToken;
+        tokenExpiration = expirationTime;
+        return storedToken;
+      } else {
+        // Token expired, clear it
+        await clearBearerToken();
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Failed to get token:', error);
     return null;
   }
-  return bearerToken;
 };
 
 // Function to clear the bearer token
-export const clearBearerToken = (): void => {
-  bearerToken = null;
-  tokenExpiration = null;
+export const clearBearerToken = async (): Promise<void> => {
+  try {
+    // Clear in-memory cache
+    bearerToken = null;
+    tokenExpiration = null;
+
+    // Clear from AsyncStorage
+    await AsyncStorage.removeItem(TOKEN_STORAGE_KEY);
+    await AsyncStorage.removeItem(TOKEN_EXPIRATION_KEY);
+
+    console.log('Token cleared successfully');
+  } catch (error) {
+    console.error('Failed to clear token:', error);
+  }
 };
 
 // Function to update the API host
@@ -96,7 +151,7 @@ export const updateClientCredentials = async (clientId: string, clientSecret: st
     API_CONFIG.clientSecret = clientSecret;
 
     // Clear any existing token when credentials change
-    clearBearerToken();
+    await clearBearerToken();
 
     console.log('Client credentials updated');
   } catch (error) {

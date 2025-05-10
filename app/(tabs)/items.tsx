@@ -11,6 +11,7 @@ import { ErrorDisplay } from '@/components/ErrorDisplay';
 import { ConfigSheet } from '@/components/ConfigSheet';
 import { CreateItemSheet } from '@/components/CreateItemSheet';
 import { Item, itemsApi, ApiError } from '@/services/api';
+import { getBearerToken } from '@/constants/ApiConfig';
 
 export default function ItemsScreen() {
   const [items, setItems] = useState<Item[]>([]);
@@ -23,12 +24,27 @@ export default function ItemsScreen() {
   const [isConfigSheetVisible, setIsConfigSheetVisible] = useState(false);
   const [isCreateItemSheetVisible, setIsCreateItemSheetVisible] = useState(false);
   const [deletingItemId, setDeletingItemId] = useState<number | null>(null);
+  const [hasToken, setHasToken] = useState(false);
+
+  // Check if a token exists
+  const checkToken = useCallback(async () => {
+    const token = await getBearerToken();
+    setHasToken(!!token);
+    return !!token;
+  }, []);
 
   // Fetch items from the API - memoized with useCallback so it can be used as a dependency and for retry
   const fetchItems = useCallback(async () => {
     // Reset state before fetching
     setLoading(true);
     setError(null);
+
+    // Check if a token exists before fetching data
+    const hasValidToken = await checkToken();
+    if (!hasValidToken) {
+      setLoading(false);
+      return;
+    }
 
     try {
       // Fetch items from the API using the itemsApi service
@@ -40,8 +56,8 @@ export default function ItemsScreen() {
       setErrorDetails({});
     } catch (err) {
       // Handle API errors
-      const errorMessage = err instanceof ApiError 
-        ? `API Error (${err.status}): ${err.message}` 
+      const errorMessage = err instanceof ApiError
+        ? `API Error (${err.status}): ${err.message}`
         : 'Failed to fetch items';
 
       setError(errorMessage);
@@ -59,15 +75,22 @@ export default function ItemsScreen() {
         setErrorDetails({});
       }
     }
-  }, []);
+  }, [checkToken]);
 
-  // Fetch items on component mount
+  // Check for token and fetch items on component mount
   useEffect(() => {
     fetchItems();
   }, [fetchItems]);
 
   // Handle item deletion
   const handleDeleteItem = useCallback(async (id: number) => {
+    // Check if a token exists before deleting
+    const hasValidToken = await checkToken();
+    if (!hasValidToken) {
+      Alert.alert('Error', 'Authentication required. Please configure your API credentials.');
+      return;
+    }
+
     try {
       setDeletingItemId(id);
       await itemsApi.deleteItem(id);
@@ -75,8 +98,8 @@ export default function ItemsScreen() {
       setItems(prevItems => prevItems.filter(item => item.id !== id));
     } catch (err) {
       // Handle API errors
-      const errorMessage = err instanceof ApiError 
-        ? `API Error (${err.status}): ${err.message}` 
+      const errorMessage = err instanceof ApiError
+        ? `API Error (${err.status}): ${err.message}`
         : 'Failed to delete item';
 
       Alert.alert('Error', errorMessage);
@@ -84,13 +107,13 @@ export default function ItemsScreen() {
     } finally {
       setDeletingItemId(null);
     }
-  }, []);
+  }, [checkToken]);
 
   // Render the delete button for swipeable
   const renderRightActions = useCallback((item: Item) => {
     return (
       <View style={styles.deleteButtonContainer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.deleteButton}
           onPress={() => {
             Alert.alert(
@@ -98,8 +121,8 @@ export default function ItemsScreen() {
               `Are you sure you want to delete "${item.name}"?`,
               [
                 { text: 'Cancel', style: 'cancel' },
-                { 
-                  text: 'Delete', 
+                {
+                  text: 'Delete',
                   style: 'destructive',
                   onPress: () => handleDeleteItem(item.id)
                 }
@@ -130,7 +153,17 @@ export default function ItemsScreen() {
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Items</ThemedText>
         <View style={styles.buttonsContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={fetchItems}
+          >
+            <IconSymbol
+              name="arrow.clockwise"
+              size={24}
+              color="#4A90E2"
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
             style={styles.actionButton}
             onPress={() => setIsCreateItemSheetVisible(true)}
           >
@@ -140,7 +173,7 @@ export default function ItemsScreen() {
               color="#4A90E2"
             />
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.actionButton}
             onPress={() => setIsConfigSheetVisible(true)}
           >
@@ -153,13 +186,30 @@ export default function ItemsScreen() {
         </View>
       </ThemedView>
 
-      {loading ? (
+      {!hasToken ? (
+        <ThemedView style={styles.noTokenContainer}>
+          <ThemedText style={styles.noTokenText}>
+            Authentication required to view items.
+          </ThemedText>
+          <ThemedText style={styles.noTokenSubtext}>
+            Please configure your API credentials.
+          </ThemedText>
+          <TouchableOpacity
+            style={styles.configButton}
+            onPress={() => setIsConfigSheetVisible(true)}
+          >
+            <ThemedText style={styles.configButtonText}>
+              Configure API
+            </ThemedText>
+          </TouchableOpacity>
+        </ThemedView>
+      ) : loading ? (
         <ThemedView style={styles.loadingContainer}>
           <ThemedText>Loading items...</ThemedText>
         </ThemedView>
       ) : error ? (
-        <ErrorDisplay 
-          message={error} 
+        <ErrorDisplay
+          message={error}
           onRetry={fetchItems}
           apiUrl={errorDetails.apiUrl}
           apiEnvironment={errorDetails.apiEnvironment}
@@ -167,9 +217,9 @@ export default function ItemsScreen() {
       ) : (
         <>
           {items.map((item) => (
-            <Animated.View 
-              key={item.id} 
-              entering={FadeIn} 
+            <Animated.View
+              key={item.id}
+              entering={FadeIn}
               exiting={FadeOut}
             >
               <Swipeable
@@ -195,7 +245,7 @@ export default function ItemsScreen() {
       )}
 
       {/* Config Sheet */}
-      <ConfigSheet 
+      <ConfigSheet
         isVisible={isConfigSheetVisible}
         onClose={() => setIsConfigSheetVisible(false)}
       />
@@ -273,5 +323,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 1,
     borderRadius: 8,
+  },
+  noTokenContainer: {
+    padding: 24,
+    margin: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noTokenText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  noTokenSubtext: {
+    fontSize: 16,
+    marginBottom: 24,
+    textAlign: 'center',
+    opacity: 0.7,
+  },
+  configButton: {
+    backgroundColor: '#4A90E2',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  configButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

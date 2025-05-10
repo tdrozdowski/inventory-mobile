@@ -526,7 +526,7 @@ export const authApi = {
       if (data && data.token) {
         // Since the response doesn't include an expires_in field, set a default expiration time (1 hour)
         const defaultExpiresIn = 3600; // 1 hour in seconds
-        storeBearerToken(data.token, defaultExpiresIn);
+        await storeBearerToken(data.token, defaultExpiresIn);
       }
 
       return data;
